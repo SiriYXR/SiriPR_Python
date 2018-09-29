@@ -104,5 +104,6 @@ venv.bak/
 .mypy_cache/
 
 #resources
-image/
-video/
+/resources/image
+/resources/video
+/resources/train
