@@ -7,6 +7,8 @@
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtWidgets import QPushButton, QLabel, QHBoxLayout, QVBoxLayout, QWidget
 
+from prmod.train.SVM_train import SVMTrain
+
 
 class TrainWidget(QWidget):
 
@@ -33,10 +35,14 @@ class TrainWidget(QWidget):
 
         """--------------------------------------------"""
 
+        self.btn_train=QPushButton("train")
+        self.btn_train.clicked.connect(self.on_btn_train_clicked)
+
 
         """-------------------- vlayout------------------------"""
         self.vlayout = QVBoxLayout()
         self.vlayout.addLayout(self.topLayout)
+        self.vlayout.addWidget(self.btn_train)
 
         self.vlayout.setAlignment(Qt.AlignTop)
 
@@ -45,6 +51,13 @@ class TrainWidget(QWidget):
     @pyqtSlot(bool)
     def on_btn_return_clicked(self, checked):
         self.fWindow.on_indexAct_clicked()
+
+    @pyqtSlot(bool)
+    def on_btn_train_clicked(self, checked):
+        test = SVMTrain()
+        test.setPlatesFolder('resources/train/SVM')
+        test.setXML('resources/train/svm.xml')
+        test.train()
 
     def keyPressEvent(self, event):
 
