@@ -12,9 +12,11 @@ class SVMTrain():
     def __init__(self):
         self.plates_folder=''
         self.xml=''
+        self.rounds=0
 
     def train(self):
         svmtrain=SvmTrain(self.plates_folder,self.xml)
+        svmtrain.setRounds(self.rounds)
         svmtrain.train()
 
     def setPlatesFolder(self,path):
@@ -23,8 +25,5 @@ class SVMTrain():
     def setXML(self,path):
         self.xml=path
 
-if __name__ == "__main__":
-    test=SVMTrain()
-    test.setPlatesFolder('./train/SVM')
-    test.setXML('./train/SVM')
-    test.train()
+    def setRounds(self,param):
+        self.rounds=param
