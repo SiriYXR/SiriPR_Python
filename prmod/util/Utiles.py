@@ -4,6 +4,9 @@
 @file:Utiles.py
 @time:2018/9/22 16:47
 """
+import ctypes
+import inspect
+
 import cv2
 
 import numpy
@@ -86,3 +89,23 @@ class VideoPRLabel(QLabel):
 
             plateimg = self.Parent.qimg.copy(x, y, w, h).scaled(140, 30)
             painter.drawPixmap(110, 30 * i, QPixmap.fromImage(plateimg))
+
+
+"""强制终止线程"""
+def _async_raise(tid, exctype):
+    """raises the exception, performs cleanup if needed"""
+    tid = ctypes.c_long(tid)
+    if not inspect.isclass(exctype):
+        exctype = type(exctype)
+    res = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, ctypes.py_object(exctype))
+    if res == 0:
+        raise ValueError("invalid thread id")
+    elif res != 1:
+        """if it returns a number greater than one, you're in trouble,
+        and you should call it again with exc=NULL to revert the effect"""
+        ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, None)
+        raise SystemError("PyThreadState_SetAsyncExc failed")
+
+def stop_thread(thread):
+    _async_raise(thread.ident, SystemExit)
+

@@ -4,10 +4,14 @@
 @file:TrainWidget.py
 @time:2018/9/26 12:50
 """
+import threading
+import time
+
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtWidgets import QPushButton, QLabel, QHBoxLayout, QVBoxLayout, QWidget
 
-from prmod.train.SVM_train import SVMTrain
+from prmod.train.SVM_train_Thread import SVM_train_Thread
+from prmod.util.Utiles import stop_thread
 
 
 class TrainWidget(QWidget):
@@ -16,6 +20,7 @@ class TrainWidget(QWidget):
         super().__init__()
 
         self.fWindow = fwind
+        self.svmthread=SVM_train_Thread()
 
         self.initUI()
 
@@ -54,10 +59,11 @@ class TrainWidget(QWidget):
 
     @pyqtSlot(bool)
     def on_btn_train_clicked(self, checked):
-        test = SVMTrain()
-        test.setPlatesFolder('resources/train/SVM')
-        test.setXML('resources/train/svm.xml')
-        test.train()
+
+        self.svmthread.start()
+        time.sleep(5)
+        stop_thread(self.svmthread)
+
 
     def keyPressEvent(self, event):
 

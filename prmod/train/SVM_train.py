@@ -12,7 +12,7 @@ class SVMTrain():
     def __init__(self):
         self.plates_folder=''
         self.xml=''
-        self.rounds=0
+        self.rounds=200
 
     def train(self):
         svmtrain=SvmTrain(self.plates_folder,self.xml)
