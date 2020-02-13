@@ -108,3 +108,8 @@ venv.bak/
 /resources/video
 /resources/train
 /resources/model
+
+.idea/
+.idea/misc.xml
+.idea/SiriPR.iml
+.idea/workspace.xml
