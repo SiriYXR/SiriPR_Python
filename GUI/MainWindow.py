@@ -28,10 +28,11 @@ class MainWindow(QMainWindow):
     def initUI(self):
         self.resize(600, 500)
         self.setMinimumSize(600, 500)
-        self.move((QApplication.desktop().width() - self.width()) / 2,
-                  (QApplication.desktop().height() - self.height()) / 2)
+        self.setStyleSheet('QMainWindow{background-color:white}')
+        self.move(int((QApplication.desktop().width() - self.width()) / 2),
+                  int((QApplication.desktop().height() - self.height()) / 2))
         self.setWindowTitle('SiriPR')
-        self.setWindowIcon(QIcon('GUI/img/icon/logo_pr.png'))
+        self.setWindowIcon(QIcon('GUI/img/icon/siripr_icon_1000_1000.png'))
         self.statusBar().showMessage('Welcome to use SiriPR')
 
         self.indexWidget = IndexWidget(self)
@@ -135,23 +136,31 @@ class MainWindow(QMainWindow):
         aboutWidget = QDialog(self)
         aboutWidget.setAttribute(Qt.WA_DeleteOnClose)
         aboutWidget.setWindowTitle('About')
+        aboutWidget.setStyleSheet('background-color: white;')
         aboutWidget.setFixedSize(350, 450)
-        aboutWidget.move((QApplication.desktop().width() - aboutWidget.width()) / 2,
-                         (QApplication.desktop().height() - aboutWidget.height()) / 2)
+        aboutWidget.move(int((QApplication.desktop().width() - aboutWidget.width()) / 2),
+                         int((QApplication.desktop().height() - aboutWidget.height()) / 2))
 
-        qimg = QImage('GUI/img/icon/logo_pr.png').scaled(200, 200)
+        qimg = QImage('GUI/img/icon/siripr_icon_1000_1000.png').scaled(200, 200)
         imgLabel = QLabel()
         imgLabel.setPixmap(QPixmap.fromImage(qimg))
         imgLabel.setAlignment(Qt.AlignCenter)
 
-        msgLabel = QLabel()
-        msgLabel.setFont(QFont("Microsoft YaHei", 12, QFont.Normal))
-        msgLabel.setText('SiriPR\nVersion: debug\nMade by SiriYang\n\nA Chinese car plate recognization\nsystem based on libsiripr python API')
+        infoLabel = QLabel()
+        infoLabel.setFont(QFont("Microsoft YaHei", 12, QFont.Normal))
+        infoLabel.setText('SiriPR v1.0\n\n基于 libsiripr 的中国车牌识别系统')
+        infoLabel.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+
+        buttomLabel = QLabel()
+        buttomLabel.setFont(QFont("Microsoft YaHei", 10, QFont.Normal))
+        buttomLabel.setText('Copyright © 2020 Siriyang\nblog.siriyang.cn')
+        buttomLabel.setAlignment(Qt.AlignCenter| Qt.AlignVCenter)
 
         vlayout = QVBoxLayout()
         vlayout.setAlignment(Qt.AlignHCenter)
         vlayout.addWidget(imgLabel)
-        vlayout.addWidget(msgLabel)
+        vlayout.addWidget(infoLabel)
+        vlayout.addWidget(buttomLabel)
 
         aboutWidget.setLayout(vlayout)
         aboutWidget.exec()
