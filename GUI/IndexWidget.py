@@ -25,6 +25,7 @@ class IndexWidget(QWidget):
 
         self.btn_ImgRecognize = QPushButton("ImageRecognize")
         self.btn_ImgRecognize.setMaximumSize(1000, 1000)
+        self.btn_ImgRecognize.setStyleSheet('')
         self.btn_ImgRecognize.setStatusTip('Image recognize')
         self.btn_ImgRecognize.clicked.connect(self.on_btn_ImgRecognize_clicked)
 
