@@ -9,7 +9,7 @@ import configparser
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QFileDialog, \
-    QPushButton, QScrollArea,QGridLayout
+    QPushButton, QScrollArea,QGridLayout,QCheckBox,QSpinBox,QComboBox
 
 BTN_STYLE="""
         QPushButton
@@ -44,9 +44,11 @@ SCROLLAREA_STYLE="""
             color:dimgray;
             font-weight:bold;
         }
+        
         QWidget{
-            background:#fff;
+            background:#FBFAFA;
         }
+        
         QLineEdit{
             border:1px solid #B5ADAD;
             font-family:Microsoft Yahei;
@@ -105,16 +107,118 @@ SCROLLAREA_STYLE="""
         {
             background:#f1f1f1; 
         }
+        
+        QPushButton
+        {
+            font-family:Microsoft Yahei;
+            font-size:14px;
+            color:dimgray;
+            background-color:#fff;
+            border:1px solid #B5ADAD;
+            border-radius:2px;
+        }
+        QPushButton:hover
+        {
+            color:#fff;
+            background-color:dimgray;
+        }
+        QPushButton:pressed
+        {
+            color:#fff;
+            background-color:dimgray;
+            padding-left:3px;
+            padding-top:3px;
+        }
+        
+        QComboBox{
+            font-family:Microsoft YaHei;
+            border:1px solid #B5ADAD;
+            border-radius:2px;
+            background: #fff;
+            font:12px;
+            color:dimgray;
+        }
+        QComboBox QAbstractItemView{
+            border: 0px;
+            outline:0px;
+            selection-background-color: #2C2A28;
+            height:100px;
+            background: #fff;
+            font-size:12px
+        }
+        QComboBox QAbstractItemView::item {
+            height:30px;
+        }
+        QComboBox QAbstractItemView::item:selected{
+            background-color: #f1f1f1;
+        }
+        QComboBox::down-arrow{
+            background: #fff;
+            color:dimgray;
+        }
+        QComboBox::drop-down{
+            border:0px;
+        }
+        
+        
+        QSpinBox{
+            border:1px solid #B5ADAD;
+            height: 21px;
+        }
+        /*spinbox 抬起样式*/
+        QTimeEdit::up-button,QDoubleSpinBox::up-button,QSpinBox::up-button {subcontrol-origin:border;
+            subcontrol-position:right;
+            image: url(./GUI2/img/spinbox_up_right.png);
+            width: 12px;
+            height: 20px;       
+        }
+        QTimeEdit::down-button,QDoubleSpinBox::down-button,QSpinBox::down-button {subcontrol-origin:border;
+            subcontrol-position:left;
+            border-image: url(./GUI2/img/spinbox_up_left.png);
+            width: 12px;
+            height: 20px;
+        }
+        /*按钮按下样式*/
+        QTimeEdit::up-button:pressed,QDoubleSpinBox::up-button:pressed,QSpinBox::up-button:pressed{subcontrol-origin:border;
+            subcontrol-position:right;
+            image: url(./GUI2/img/spinbox_down_right.png);
+            width: 12px;
+            height: 20px;       
+        }
+        QTimeEdit::down-button:pressed,QDoubleSpinBox::down-button:pressed,QSpinBox::down-button:pressed,QSpinBox::down-button:pressed{
+            subcontrol-position:left;
+            image: url(./GUI2/img/spinbox_down_left.png);
+            width: 12px;
+            height: 20px;
+        }
+        
+        /*RadioButton和checkbox字体和间距设置*/
+        QRadioButton ,QCheckBox{
+            spacing: 5px;
+            font-size: 12px;
+        }
+        /*checkbox样式设置*/
+        QCheckBox::indicator { 
+            width: 26px;
+            height: 50px;
+        }
+        /*未选中*/
+        QCheckBox::indicator::unchecked {   
+            image: url(./GUI2/img/iosCheckBoxOff.png);
+        }
+        /*选中*/
+        QCheckBox::indicator::checked { 
+            image: url(./GUI2/img/iosCheckBoxOn.png);
+        }
         """
 
 class SettingWidget(QWidget):
 
     def __init__(self, fWind):
-        super().__init__(fWind)
+        super().__init__()
         self.fWindow=fWind
 
         self.config = configparser.ConfigParser()
-
         self.config.read("resources/config/siripr.ini")
 
         self.initUI()
@@ -122,6 +226,7 @@ class SettingWidget(QWidget):
 
     def initUI(self):
 
+        """------------------模型路径设置------------------"""
         self.label_ModelPath=QLabel('模型路径设置')
         self.label_ModelPath.setFixedHeight(20)
         self.label_ModelPath.setAlignment(Qt.AlignCenter)
@@ -220,11 +325,161 @@ class SettingWidget(QWidget):
         layout_ModelPath.addLayout(layout_ChineseANN)
         layout_ModelPath.addLayout(layout_GrayChANN)
         layout_ModelPath.addLayout(layout_ChineseMapping)
-        layout_ModelPath.addStretch()
+
+        """------------------图片识别设置------------------"""
+        self.label_ImgPR = QLabel('图片识别设置')
+        self.label_ImgPR.setFixedHeight(20)
+        self.label_ImgPR.setAlignment(Qt.AlignCenter)
+
+        self.label_ImgPR_debug=QLabel('调试:')
+        self.label_ImgPR_debug.setFixedSize(40, 30)
+        self.label_ImgPR_debug.setAlignment(Qt.AlignLeft | Qt.AlignCenter)
+        self.checkbox_ImgPR_debug=QCheckBox()
+        self.checkbox_ImgPR_debug.setFixedSize(100, 30)
+
+        layout_ImgPR_debug = QHBoxLayout()
+        layout_ImgPR_debug.setContentsMargins(0, 5, 0, 0)
+        layout_ImgPR_debug.setSpacing(5)
+        layout_ImgPR_debug.addWidget(self.label_ImgPR_debug)
+        layout_ImgPR_debug.addWidget(self.checkbox_ImgPR_debug)
+        layout_ImgPR_debug.addStretch()
+
+        self.label_ImgPR_label = QLabel('标注结果:')
+        self.label_ImgPR_label.setFixedSize(65, 30)
+        self.label_ImgPR_label.setAlignment(Qt.AlignLeft | Qt.AlignCenter)
+        self.checkbox_ImgPR_label = QCheckBox()
+        self.checkbox_ImgPR_label.setFixedSize(100, 30)
+
+        layout_ImgPR_label = QHBoxLayout()
+        layout_ImgPR_label.setContentsMargins(0, 5, 0, 0)
+        layout_ImgPR_label.setSpacing(5)
+        layout_ImgPR_label.addWidget(self.label_ImgPR_label)
+        layout_ImgPR_label.addWidget(self.checkbox_ImgPR_label)
+        layout_ImgPR_label.addStretch()
+
+        self.label_ImgPR_detecttype = QLabel('检测类型:')
+        self.label_ImgPR_detecttype.setFixedSize(65, 30)
+        self.label_ImgPR_detecttype.setAlignment(Qt.AlignLeft | Qt.AlignCenter)
+        self.combobox_ImgPR_detecttype = QComboBox()
+        self.combobox_ImgPR_detecttype.addItems(
+            ['SOBEL', 'COLOR', 'CMSER', 'SOBEL&COLOR', 'SOBEL&CMSER', 'COLOR&CMSER', 'All'])
+
+        layout_ImgPR_detecttype = QHBoxLayout()
+        layout_ImgPR_detecttype.setContentsMargins(0, 5, 0, 0)
+        layout_ImgPR_detecttype.setSpacing(5)
+        layout_ImgPR_detecttype.addWidget(self.label_ImgPR_detecttype)
+        layout_ImgPR_detecttype.addWidget(self.combobox_ImgPR_detecttype)
+        layout_ImgPR_detecttype.addStretch()
+
+        self.label_ImgPR_maxplates = QLabel('最大车牌上限:')
+        self.label_ImgPR_maxplates.setFixedSize(90, 30)
+        self.label_ImgPR_maxplates.setAlignment(Qt.AlignLeft | Qt.AlignCenter)
+        self.spinbox_ImgPR_maxplates = QSpinBox()
+        self.spinbox_ImgPR_maxplates.setFixedSize(50, 22)
+        self.spinbox_ImgPR_maxplates.setAlignment(Qt.AlignCenter)
+        self.spinbox_ImgPR_maxplates.setMinimum(1)
+        self.spinbox_ImgPR_maxplates.setMaximum(10)
+
+        layout_ImgPR_maxplates = QHBoxLayout()
+        layout_ImgPR_maxplates.setContentsMargins(0, 5, 0, 0)
+        layout_ImgPR_maxplates.setSpacing(5)
+        layout_ImgPR_maxplates.addWidget(self.label_ImgPR_maxplates)
+        layout_ImgPR_maxplates.addWidget(self.spinbox_ImgPR_maxplates)
+        layout_ImgPR_maxplates.addStretch()
+
+        layout_ImgPR = QVBoxLayout()
+        layout_ImgPR.setContentsMargins(5, 10, 5, 0)
+        layout_ImgPR.setSpacing(10)
+        layout_ImgPR.addWidget(self.label_ImgPR)
+        layout_ImgPR.addLayout(layout_ImgPR_debug)
+        layout_ImgPR.addLayout(layout_ImgPR_label)
+        layout_ImgPR.addLayout(layout_ImgPR_detecttype)
+        layout_ImgPR.addLayout(layout_ImgPR_maxplates)
+
+        """------------------视频识别设置------------------"""
+        self.label_VideoPR = QLabel('图片识别设置')
+        self.label_VideoPR.setFixedHeight(20)
+        self.label_VideoPR.setAlignment(Qt.AlignCenter)
+
+        self.label_VideoPR_debug = QLabel('调试:')
+        self.label_VideoPR_debug.setFixedSize(40, 30)
+        self.label_VideoPR_debug.setAlignment(Qt.AlignLeft | Qt.AlignCenter)
+        self.checkbox_VideoPR_debug = QCheckBox()
+        self.checkbox_VideoPR_debug.setFixedSize(100, 30)
+
+        layout_VideoPR_debug = QHBoxLayout()
+        layout_VideoPR_debug.setContentsMargins(0, 5, 0, 0)
+        layout_VideoPR_debug.setSpacing(5)
+        layout_VideoPR_debug.addWidget(self.label_VideoPR_debug)
+        layout_VideoPR_debug.addWidget(self.checkbox_VideoPR_debug)
+        layout_VideoPR_debug.addStretch()
+
+        self.label_VideoPR_label = QLabel('标注结果:')
+        self.label_VideoPR_label.setFixedSize(65, 30)
+        self.label_VideoPR_label.setAlignment(Qt.AlignLeft | Qt.AlignCenter)
+        self.checkbox_VideoPR_label = QCheckBox()
+        self.checkbox_VideoPR_label.setFixedSize(100, 30)
+
+        layout_VideoPR_label = QHBoxLayout()
+        layout_VideoPR_label.setContentsMargins(0, 5, 0, 0)
+        layout_VideoPR_label.setSpacing(5)
+        layout_VideoPR_label.addWidget(self.label_VideoPR_label)
+        layout_VideoPR_label.addWidget(self.checkbox_VideoPR_label)
+        layout_VideoPR_label.addStretch()
+
+        self.label_VideoPR_detecttype = QLabel('检测类型:')
+        self.label_VideoPR_detecttype.setFixedSize(65, 30)
+        self.label_VideoPR_detecttype.setAlignment(Qt.AlignLeft | Qt.AlignCenter)
+        self.combobox_VideoPR_detecttype = QComboBox()
+        self.combobox_VideoPR_detecttype.addItems(
+            ['SOBEL', 'COLOR', 'CMSER', 'SOBEL&COLOR', 'SOBEL&CMSER', 'COLOR&CMSER', 'All'])
+
+        layout_VideoPR_detecttype = QHBoxLayout()
+        layout_VideoPR_detecttype.setContentsMargins(0, 5, 0, 0)
+        layout_VideoPR_detecttype.setSpacing(5)
+        layout_VideoPR_detecttype.addWidget(self.label_VideoPR_detecttype)
+        layout_VideoPR_detecttype.addWidget(self.combobox_VideoPR_detecttype)
+        layout_VideoPR_detecttype.addStretch()
+
+        self.label_VideoPR_maxplates = QLabel('最大车牌上限:')
+        self.label_VideoPR_maxplates.setFixedSize(90, 30)
+        self.label_VideoPR_maxplates.setAlignment(Qt.AlignLeft | Qt.AlignCenter)
+        self.spinbox_VideoPR_maxplates = QSpinBox()
+        self.spinbox_VideoPR_maxplates.setFixedSize(50, 22)
+        self.spinbox_VideoPR_maxplates.setAlignment(Qt.AlignCenter)
+        self.spinbox_VideoPR_maxplates.setMinimum(1)
+        self.spinbox_VideoPR_maxplates.setMaximum(10)
+
+        layout_VideoPR_maxplates = QHBoxLayout()
+        layout_VideoPR_maxplates.setContentsMargins(0, 5, 0, 0)
+        layout_VideoPR_maxplates.setSpacing(5)
+        layout_VideoPR_maxplates.addWidget(self.label_VideoPR_maxplates)
+        layout_VideoPR_maxplates.addWidget(self.spinbox_VideoPR_maxplates)
+        layout_VideoPR_maxplates.addStretch()
+
+        layout_VideoPR = QVBoxLayout()
+        layout_VideoPR.setContentsMargins(5, 10, 5, 0)
+        layout_VideoPR.setSpacing(10)
+        layout_VideoPR.addWidget(self.label_VideoPR)
+        layout_VideoPR.addLayout(layout_VideoPR_debug)
+        layout_VideoPR.addLayout(layout_VideoPR_label)
+        layout_VideoPR.addLayout(layout_VideoPR_detecttype)
+        layout_VideoPR.addLayout(layout_VideoPR_maxplates)
+
+
+
+        """------------------QScrollArea------------------"""
+        sa_contentLayout = QVBoxLayout()
+        sa_contentLayout.setContentsMargins(0, 0, 0, 0)
+        sa_contentLayout.setSpacing(10)
+        sa_contentLayout.addLayout(layout_ModelPath)
+        sa_contentLayout.addLayout(layout_ImgPR)
+        sa_contentLayout.addLayout(layout_VideoPR)
+        sa_contentLayout.addStretch()
 
         self.sa_contentWidget = QWidget()
-        self.sa_contentWidget.setFixedSize(600, 1000)
-        self.sa_contentWidget.setLayout(layout_ModelPath)
+        self.sa_contentWidget.setFixedSize(600, 900)
+        self.sa_contentWidget.setLayout(sa_contentLayout)
 
         self.sa_Settings = QScrollArea()
         self.sa_Settings.setStyleSheet(SCROLLAREA_STYLE)
@@ -271,6 +526,28 @@ class SettingWidget(QWidget):
         self.lineedit_ChineseANN.setText(self.config.get('Model', 'ChineseANN'))
         self.lineedit_GrayChANN.setText(self.config.get('Model', 'GrayChANN'))
         self.lineedit_ChineseMapping.setText(self.config.get('Model', 'ChineseMapping'))
+
+        if self.config.get('IMGPR','debug')=='True':
+            self.checkbox_ImgPR_debug.setCheckState(Qt.Checked)
+        else:
+            self.checkbox_ImgPR_debug.setCheckState(Qt.Unchecked)
+        if self.config.get('IMGPR','label')=='True':
+            self.checkbox_ImgPR_label.setCheckState(Qt.Checked)
+        else:
+            self.checkbox_ImgPR_label.setCheckState(Qt.Unchecked)
+        self.combobox_ImgPR_detecttype.setCurrentIndex(int(self.config.get('IMGPR','detecttype')))
+        self.spinbox_ImgPR_maxplates.setValue(int(self.config.get('IMGPR','maxplates')))
+
+        if self.config.get('VIDEOPR','debug')=='True':
+            self.checkbox_VideoPR_debug.setCheckState(Qt.Checked)
+        else:
+            self.checkbox_VideoPR_debug.setCheckState(Qt.Unchecked)
+        if self.config.get('VIDEOPR','label')=='True':
+            self.checkbox_VideoPR_label.setCheckState(Qt.Checked)
+        else:
+            self.checkbox_VideoPR_label.setCheckState(Qt.Unchecked)
+        self.combobox_VideoPR_detecttype.setCurrentIndex(int(self.config.get('VIDEOPR','detecttype')))
+        self.spinbox_VideoPR_maxplates.setValue(int(self.config.get('VIDEOPR','maxplates')))
 
     def defualtData(self):
         self.config.read("resources/config/defualt.ini")
@@ -322,5 +599,28 @@ class SettingWidget(QWidget):
         self.config.set('Model', 'ChineseANN', self.lineedit_ChineseANN.text())
         self.config.set('Model', 'GrayChANN', self.lineedit_GrayChANN.text())
         self.config.set('Model', 'ChineseMapping', self.lineedit_ChineseMapping.text())
+
+        if self.checkbox_ImgPR_debug.isChecked():
+            self.config.set('IMGPR', 'debug',"True")
+        else:
+            self.config.set('IMGPR', 'debug', "False")
+        if self.checkbox_ImgPR_label.isChecked():
+            self.config.set('IMGPR', 'label',"True")
+        else:
+            self.config.set('IMGPR', 'label', "False")
+        self.config.set('IMGPR', 'detecttype', str(self.combobox_ImgPR_detecttype.currentIndex()))
+        self.config.set('IMGPR', 'maxplates', str(self.spinbox_ImgPR_maxplates.value()))
+
+        if self.checkbox_VideoPR_debug.isChecked():
+            self.config.set('VIDEOPR', 'debug',"True")
+        else:
+            self.config.set('VIDEOPR', 'debug', "False")
+        if self.checkbox_VideoPR_label.isChecked():
+            self.config.set('VIDEOPR', 'label',"True")
+        else:
+            self.config.set('VIDEOPR', 'label', "False")
+        self.config.set('VIDEOPR', 'detecttype', str(self.combobox_VideoPR_detecttype.currentIndex()))
+        self.config.set('VIDEOPR', 'maxplates', str(self.spinbox_VideoPR_maxplates.value()))
+
         self.config.write(open("resources/config/siripr.ini", "w"))
         self.fWindow.plateRecognize.loadModel()

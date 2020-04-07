@@ -10,14 +10,21 @@ import os
 
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QFileDialog, QCheckBox, QHBoxLayout, QScrollArea, \
+from PyQt5.QtWidgets import QWidget,  QPushButton, QVBoxLayout, QFileDialog, QCheckBox, QHBoxLayout, QScrollArea, \
     QSpinBox
+
+from GUI2.ImgFileWidget import ImgFileWidget
 
 from prmod.core.CPlate import CPlate
 from prmod.util.Utiles import *
 
 MAIN_STYLE="""
-    
+        *{
+            font-family:Microsoft Yahei;
+            font-size:12px;
+            color:dimgray;
+        }
+        
         QPushButton
         {
             font-family:Microsoft Yahei;
@@ -103,6 +110,126 @@ MAIN_STYLE="""
         }
         """
 
+SCROLLAREA_STYLE="""
+        QLabel{
+            font-family:Microsoft Yahei;
+            font-size:14px;
+            color:dimgray;
+            font-weight:bold;
+        }
+        QWidget{
+            background:#fff;
+        }
+        QLineEdit{
+            border:1px solid #B5ADAD;
+            font-family:Microsoft Yahei;
+            font-size:13px;
+            color:gray;
+        }
+        QScrollArea{
+            border:1px solid #B5ADAD;
+        }
+        QScrollBar:vertical
+        {
+            border-radius:7px;  
+            background:#f1f1f1; 
+            padding-top:14px;  
+            padding-bottom:14px;  
+        }
+        QScrollBar::handle:vertical
+        {
+            background:#C4CAD0; 
+            border-radius:6px;  
+            margin-left:2px;  
+            margin-right:2px;  
+        }
+        QScrollBar::handle:vertical:hover
+        {
+            background:gray;
+            border-radius:6px;
+        }
+        QScrollBar::add-line:vertical
+        {
+            height:14px;width:8px;  
+            image:url('');  
+        }
+        QScrollBar::sub-line:vertical
+        {
+            height:14px;width:8px;
+            image:url('');  
+        }
+        QScrollBar::add-line:vertical:hover
+        {
+            height:14px;width:8px;
+            image:url('');
+            subcontrol-position:bottom;
+        }
+        QScrollBar::sub-line:vertical:hover
+        {
+            height:14px;width:8px;
+            image:url('');  
+            subcontrol-position:top;
+        }
+        QScrollBar::add-page:vertical
+        {
+            background:#f1f1f1;
+        }
+        QScrollBar::sub-page:vertical
+        {
+            background:#f1f1f1; 
+        }
+        
+        QScrollBar:horizontal
+        {
+            border-radius:7px;  
+            background:#f1f1f1; 
+            padding-left:14px;  
+            padding-right:14px;  
+        }
+        QScrollBar::handle:horizontal
+        {
+            background:#C4CAD0; 
+            border-radius:6px;  
+            margin-top:2px;  
+            margin-bottom:2px;  
+        }
+        QScrollBar::handle:horizontal:hover
+        {
+            background:gray;
+            border-radius:6px;
+        }
+        QScrollBar::add-line:horizontal
+        {
+            height:14px;width:8px;  
+            image:url('');  
+        }
+        QScrollBar::sub-line:horizontal
+        {
+            height:14px;width:8px;
+            image:url('');  
+        }
+        QScrollBar::add-line:horizontal:hover
+        {
+            height:14px;width:8px;
+            image:url('');
+            subcontrol-position:right;
+        }
+        QScrollBar::sub-line:horizontal:hover
+        {
+            height:14px;width:8px;
+            image:url('');  
+            subcontrol-position:left;
+        }
+        QScrollBar::add-page:horizontal
+        {
+            background:#f1f1f1;
+        }
+        QScrollBar::sub-page:horizontal
+        {
+            background:#f1f1f1; 
+        }
+        """
+
 IOS_CHECKBOX_STYLE="""
         /*RadioButton和checkbox字体和间距设置*/
         QRadioButton ,QCheckBox{
@@ -136,25 +263,22 @@ class ImgPRWidget(QWidget):
         self.qimg = None
         self.plate = None
         self.filelist = []
-        self.platelist = None
+        self.fileset=set()
+        self.checkedlist=[]
         self.fileindex = -1
         self.plateindex = -1
+
+        self.isCheckedAll=True
 
         self.initUI()
-
-    def initData(self):
-        self.cvimg = None
-        self.qimg = None
-        self.plate = None
-        self.filelist = []
-        self.platelist = None
-        self.fileindex = -1
-        self.plateindex = -1
 
     def initUI(self):
         self.setStyleSheet(MAIN_STYLE)
 
-        self.selectAllImgCheckBox = QCheckBox("全选")
+        self.selectAllImgCheckBox = QCheckBox("全选 (0/0)")
+        self.selectAllImgCheckBox.setTristate(False) # 取消半选中状态
+        self.selectAllImgCheckBox.setEnabled(False)
+        self.selectAllImgCheckBox.clicked.connect(self.selectAllImgCheckBoxClicked)
 
         self.inportBtn = QPushButton("+")
         self.inportBtn.setFixedSize(25,25)
@@ -164,6 +288,7 @@ class ImgPRWidget(QWidget):
         self.removeBtn = QPushButton("-")
         self.removeBtn.setFixedSize(25, 25)
         self.removeBtn.setStatusTip('移除图片文件')
+        self.removeBtn.clicked.connect(self.on_btn_remove_clicked)
 
         self.outportBtn = QPushButton("导出")
         self.outportBtn.setFixedSize(40, 25)
@@ -177,8 +302,21 @@ class ImgPRWidget(QWidget):
         topLayout.addWidget(self.removeBtn)
         topLayout.addWidget(self.outportBtn)
 
+        self.imgListContentLayout=QVBoxLayout()
+        self.imgListContentLayout.setContentsMargins(0, 0, 0, 0)
+        self.imgListContentLayout.setSpacing(2)
+
+        self.imgListScrollContent=QWidget()
+        self.imgListScrollContent.setFixedWidth(190)
+        self.imgListScrollContent.setStyleSheet('background-color:#f1f1f1')
+        self.imgListScrollContent.setContentsMargins(0, 0, 0, 0)
+        self.imgListScrollContent.setLayout(self.imgListContentLayout)
+
         self.imgListScrollArea = QScrollArea()
+        self.imgListScrollArea.setContentsMargins(0,0,0,0)
+        self.imgListScrollArea.setStyleSheet(SCROLLAREA_STYLE)
         self.imgListScrollArea.setFixedWidth(200)
+        self.imgListScrollArea.setWidget(self.imgListScrollContent)
 
         bottomLayout = QHBoxLayout()
         bottomLayout.setContentsMargins(0, 0, 0, 0)
@@ -203,15 +341,17 @@ class ImgPRWidget(QWidget):
         topLayout.addWidget(self.label_RunningMSG)
 
         """--------------------------------------------"""
-        self.imgLabel = QLabel("导入一张图片 ")
+        self.imgLabel = QLabel("导入图片 ")
         self.imgLabel.setAlignment(Qt.AlignCenter)
 
-        sa_img = QScrollArea()
-        sa_img.setWidget(self.imgLabel)
-        sa_img.setAlignment(Qt.AlignCenter)
+        self.sa_img = QScrollArea()
+        self.sa_img.setStyleSheet(SCROLLAREA_STYLE)
+        self.sa_img.setWidget(self.imgLabel)
+        self.sa_img.setAlignment(Qt.AlignCenter)
 
-        """-------------------- imgListlayout------------------------"""
+        """-------------------- currentFilePathLayout------------------------"""
         self.currentFilePathLabel = QLabel()
+        self.currentFilePathLabel.setAlignment(Qt.AlignCenter)
         self.currentFilePathLabel.setFixedHeight(30)
 
         self.btn_last_img = QPushButton("<")
@@ -224,22 +364,18 @@ class ImgPRWidget(QWidget):
         self.btn_next_img.setStatusTip('加载下一张图片')
         self.btn_next_img.clicked.connect(self.on_btn_next_img_clicked)
 
-        imgListlayout = QHBoxLayout()
-        imgListlayout.setContentsMargins(0, 2, 0, 0)
-        imgListlayout.setSpacing(5)
-        imgListlayout.addWidget(self.btn_last_img)
-        imgListlayout.addWidget(self.currentFilePathLabel)
-        imgListlayout.addWidget(self.btn_next_img)
+        currentFilePathLayout = QHBoxLayout()
+        currentFilePathLayout.setContentsMargins(0, 2, 0, 0)
+        currentFilePathLayout.setSpacing(5)
+        currentFilePathLayout.addWidget(self.btn_last_img)
+        currentFilePathLayout.addWidget(self.currentFilePathLabel)
+        currentFilePathLayout.addWidget(self.btn_next_img)
 
         """--------------------prOPlayout------------------------"""
         self.btn_recognize = QPushButton("识别")
         self.btn_recognize.setFixedSize(100, 30)
         self.btn_recognize.setStatusTip('识别当前图片')
         self.btn_recognize.clicked.connect(self.on_btn_recognize_clicked)
-
-        self.resLabel = QLabel("")
-        self.resLabel.setAlignment(Qt.AlignCenter)
-        self.resLabel.setFixedHeight(30)
 
         self.combobox_Plate = MyComboBox()
         self.combobox_Plate.setFixedHeight(30)
@@ -299,8 +435,8 @@ class ImgPRWidget(QWidget):
         recognizeLayout.setContentsMargins(5,0,5,0)
         recognizeLayout.setSpacing(0)
         recognizeLayout.addLayout(topLayout)
-        recognizeLayout.addWidget(sa_img)
-        recognizeLayout.addLayout(imgListlayout)
+        recognizeLayout.addWidget(self.sa_img)
+        recognizeLayout.addLayout(currentFilePathLayout)
         recognizeLayout.addLayout(prOPlayout)
         recognizeLayout.addLayout(settingLayout)
 
@@ -315,8 +451,8 @@ class ImgPRWidget(QWidget):
         self.setLayout(mainLayout)
 
 
-    @pyqtSlot(bool)
-    def on_btn_last_img_clicked(self, checked):
+
+    def on_btn_last_img_clicked(self):
         if self.fileindex == -1:
             self.fWindow.statusBar().showMessage('请先导入图片!')
             return
@@ -325,10 +461,9 @@ class ImgPRWidget(QWidget):
             return
 
         self.fileindex -= 1
-        self.currentFilePathLabel.setText(self.filelist[self.fileindex]['path'])
+        self.showImageFile(self.filelist[self.fileindex].file_path)
 
-    @pyqtSlot(bool)
-    def on_btn_next_img_clicked(self, checked):
+    def on_btn_next_img_clicked(self):
         if self.fileindex == -1:
             self.fWindow.statusBar().showMessage('请先导入图片!')
             return
@@ -337,30 +472,53 @@ class ImgPRWidget(QWidget):
             return
 
         self.fileindex += 1
+        self.showImageFile(self.filelist[self.fileindex].file_path)
 
-
-    @pyqtSlot(bool)
-    def on_btn_inport_clicked(self, checked):
+    def on_btn_inport_clicked(self):
         pathlist = QFileDialog.getOpenFileNames(self, "打开文件", "./resources/image",
                                                      "图片文件(*.jpg *.jpeg *.png)")[0]
-
+        redundant=0
         for i in pathlist:
-            self.filelist.append({
-                'path':i,
-                'name':os.path.basename(i),
-                'ticked':True,
-                'plates':[],
-            })
+            if i in self.fileset :
+                redundant+=1
+                continue
+            self.fileset.add(i)
+            w=ImgFileWidget(self,i)
+            self.filelist.append(w)
+            self.imgListContentLayout.addWidget(w)
+        self.imgListScrollContent.setFixedSize(196,len(self.filelist)*27)
+        self.fWindow.statusBar().showMessage('成功添加{}张图片，去除冗余图片{}张。'.format(len(pathlist)-redundant,redundant))
+        self.selectAllImgCheckBox.setEnabled(True)
+        self.updateCheckedList()
 
-        if len(self.filelist)>0:
-            self.combobox_File.clear()
+    def on_btn_remove_clicked(self):
+        tmplist=[]
+        currentImgPath=self.filelist[self.fileindex].file_path
+        for i in range(len(self.filelist)):
+            if i in self.checkedlist:
+                self.imgListContentLayout.removeWidget(self.filelist[i])
+                self.fileset.remove(self.filelist[i].file_path)
+            else:
+                tmplist.append(self.filelist[i])
+        self.filelist=tmplist
+
+        if self.fileindex in self.checkedlist:
+            if len(self.filelist)==0:
+                self.fileindex=-1
+            else:
+                self.fileindex=0
+        else:
             for i in range(len(self.filelist)):
-               pass
-            self.fileindex = 0
-            self.openIMG(self.filelist[self.fileindex])
+                if self.filelist[i].file_path==currentImgPath:
+                    self.fileindex=i
+                    break
 
-    @pyqtSlot(bool)
-    def on_btn_recognize_clicked(self, checked):
+        self.imgListScrollContent.setFixedHeight(len(self.filelist) * 27)
+        self.fWindow.statusBar().showMessage('成功移除{}张图片。'.format(len(self.checkedlist)))
+        self.updateCheckedList()
+
+
+    def on_btn_recognize_clicked(self):
 
         if self.qimg != None:
             self.plate = CPlate()
@@ -371,19 +529,18 @@ class ImgPRWidget(QWidget):
             self.fWindow.plateRecognize.setMaxPlates(self.spinbox_MaxPlates.value())
 
             begin = time()
-            self.platelist = self.fWindow.plateRecognize.plateRecognize(numpy.copy(self.cvimg))
+            self.filelist[self.fileindex].plates = self.fWindow.plateRecognize.plateRecognize(numpy.copy(self.cvimg))
             end = time()
             runtime = end - begin
 
-            platenum = len(self.platelist)
-
+            platenum=len(self.filelist[self.fileindex].plates)
             if platenum != 0:
-                self.filelist[self.fileindex]['plates']=self.platelist
                 self.plateindex = 0
                 self.combobox_Plate.clear()
-                for i in range(platenum):
-                    self.plate.license, self.plate.x, self.plate.y, self.plate.w, self.plate.h = self.platelist[i]
-                    self.combobox_Plate.insertItem(i, "{p.license} {p.x} {p.y} {p.w} {p.h}".format(p=self.plate))
+                for i in range(len(self.filelist[self.fileindex].plates)):
+                    plate_license, plate_x, plate_y, plate_w, plate_h = self.filelist[self.fileindex].plates[i]
+                    self.combobox_Plate.insertItem(i, "{} {} {} {} {}".format(plate_license, plate_x, plate_y, plate_w,
+                                                                              plate_h))
 
                 self.label_RunningMSG.setText(
                     '图片识别完成！     发现 {plates} 张车牌    运行时间:{runtime:.3f}s'.format(
@@ -401,13 +558,12 @@ class ImgPRWidget(QWidget):
         self.plateindex = self.combobox_Plate.currentIndex()
         self.setShowPlate()
 
-    @pyqtSlot(bool)
-    def on_btn_next_plate_clicked(self, checked):
+    def on_btn_next_plate_clicked(self):
         if self.plateindex == -1:
             self.fWindow.statusBar().showMessage('没有车牌!')
             return
 
-        if self.plateindex == len(self.platelist) - 1:
+        if self.plateindex == len(self.filelist[self.fileindex].plates) - 1:
             self.fWindow.statusBar().showMessage('这是最后一块车牌!')
             return
 
@@ -415,8 +571,7 @@ class ImgPRWidget(QWidget):
         self.combobox_Plate.setCurrentIndex(self.plateindex)
         self.on_combobox_Plate_clicked()
 
-    @pyqtSlot(bool)
-    def on_btn_last_plate_clicked(self, checked):
+    def on_btn_last_plate_clicked(self):
         if self.plateindex == -1:
             self.fWindow.statusBar().showMessage('没有车牌!')
             return
@@ -429,53 +584,119 @@ class ImgPRWidget(QWidget):
         self.combobox_Plate.setCurrentIndex(self.plateindex)
         self.on_combobox_Plate_clicked()
 
-    def initButton(self):
+    def initPRWidget(self):
         self.label_RunningMSG.clear()
         self.imgLabel.clear()
-        self.imgLabel.setText('导入图片文件')
+        self.imgLabel.setText('导入图片')
+        self.imgLabel.resize(200,200)
+        self.currentFilePathLabel.setText("")
         self.combobox_Plate.clear()
         self.combobox_DetectType.setCurrentIndex(0)
         self.spinbox_MaxPlates.setValue(1)
         self.cb_debug.setCheckState(False)
         self.cb_label.setCheckState(False)
+        self.plateindex=-1
 
     def show(self):
-        self.initButton()
-        self.initData()
+        if self.fileindex==-1:
+            self.initPRWidget()
         super().show()
 
-    def openIMG(self, filename):
-        self.cvimg = cv_imread(filename, 1)
+    def showImageFile(self,file_path):
+        if self.currentFilePathLabel.text() == file_path:
+            self.fWindow.statusBar().showMessage('文件已打开!')
+            return
+        self.label_RunningMSG.clear()
+        self.openIMG(file_path)
+        self.setShowQIMG()
+        self.currentFilePathLabel.setText(file_path)
+        self.upfateFileIndex()
+        self.combobox_DetectType.setCurrentIndex(self.filelist[self.fileindex].detecttype_value)
+        self.spinbox_MaxPlates.setValue(self.filelist[self.fileindex].maxplates_value)
+        self.cb_debug.setCheckState(self.filelist[self.fileindex].debug_value)
+        self.cb_label.setCheckState(self.filelist[self.fileindex].label_value)
+        self.combobox_Plate.clear()
+        for i in range(len(self.filelist[self.fileindex].plates)):
+            plate_license, plate_x, plate_y, plate_w, plate_h = self.filelist[self.fileindex].plates[i]
+            self.combobox_Plate.insertItem(i, "{} {} {} {} {}".format(plate_license, plate_x, plate_y, plate_w,
+                                                                      plate_h))
+        if len(self.filelist[self.fileindex].plates)>0:
+            self.plateindex = 0
+        else:
+            self.plateindex = -1
+
+    def openIMG(self, file_path):
+        self.cvimg = cv_imread(file_path, 1)
         self.qimg = CV2QImage(numpy.copy(self.cvimg))
         if (self.qimg != None):
             self.fWindow.statusBar().showMessage('图片打开成功！')
         else:
             self.fWindow.statusBar().showMessage('图片打开失败！')
 
-    def setShowIMG(self, cv_img):
-        qimg = CV2QImage(numpy.copy(cv_img))
-        self.imgLabel.setPixmap(QPixmap.fromImage(qimg))
-        self.imgLabel.resize(qimg.size().width(), qimg.size().height())
+    def setShowPIMG(self, cv_img):
+        img = CV2QImage(numpy.copy(cv_img))
+        self.imgLabel.setPixmap(QPixmap.fromImage(img))
+        self.imgLabel.resize(img.size().width(), img.size().height())
+
+    def setShowQIMG(self):
+        self.imgLabel.setPixmap(QPixmap.fromImage(self.qimg))
+        self.imgLabel.resize(self.qimg.size().width(), self.qimg.size().height())
 
     def setShowPlate(self):
         self.combobox_Plate.setCurrentIndex(self.plateindex)
-        self.plate.license, self.plate.x, self.plate.y, self.plate.w, self.plate.h = self.platelist[self.plateindex]
-
+        plate_license, plate_x, plate_y, plate_w, plate_h = self.filelist[self.fileindex].plates[self.plateindex]
         if self.cb_label.isChecked():
             temp = numpy.copy(self.cvimg)
-            temp = cv2.rectangle(temp, (self.plate.x, self.plate.y),
-                                 (self.plate.x + self.plate.w, self.plate.y + self.plate.h), (0, 255, 0), 2)
-            self.setShowIMG(temp)
+            temp = cv2.rectangle(temp, (plate_x, plate_y),
+                                 (plate_x + plate_w, plate_y + plate_h), (0, 255, 0), 2)
+            self.setShowPIMG(temp)
         else:
-            self.imgLabel.setPixmap(QPixmap.fromImage(self.qimg))
-            self.imgLabel.resize(self.qimg.width(), self.qimg.height())
+            self.setShowQIMG()
 
     def keyPressEvent(self, event):
 
         key = event.key()
 
-        if key == Qt.Key_Escape:
-            self.fWindow.on_indexAct_clicked()
-            return
-
         super().keyPressEvent(event)
+
+    def updateCheckedList(self):
+        self.checkedlist.clear()
+        for i in range(len(self.filelist)):
+            if(self.filelist[i].checkBox.isChecked()):
+                self.checkedlist.append(i)
+
+        if len(self.checkedlist) == len(self.filelist) and len(self.filelist)!=0:
+            self.selectAllImgCheckBox.setCheckState(Qt.Checked)
+        else:
+            self.selectAllImgCheckBox.setCheckState(Qt.Unchecked)
+
+        self.upfateFileIndex()
+
+        self.selectAllImgCheckBox.setText("全选 ({}/{})".format(len(self.checkedlist),len(self.filelist)))
+
+    def upfateFileIndex(self):
+        if len(self.filelist)==0:
+            self.initPRWidget()
+            self.fileindex=-1
+            self.selectAllImgCheckBox.setEnabled(False)
+        else:
+            self.selectAllImgCheckBox.setEnabled(True)
+
+            if not self.currentFilePathLabel.text() in self.fileset:
+                self.fileindex = -1
+                self.initPRWidget()
+            else:
+                for i in range(len(self.filelist)):
+                    if self.filelist[i].file_path==self.currentFilePathLabel.text():
+                        self.fileindex=i
+                        break
+
+    def selectAllImgCheckBoxClicked(self):
+
+        if self.selectAllImgCheckBox.isChecked():
+            for i in range(len(self.filelist)):
+                self.filelist[i].checkBox.setCheckState(Qt.Checked)
+        else:
+            for i in range(len(self.filelist)):
+                self.filelist[i].checkBox.setCheckState(Qt.Unchecked)
+        self.updateCheckedList()

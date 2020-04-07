@@ -62,8 +62,13 @@ TOP_BTN_OFF_STYLE="""
         """
 
 MAINWINDOW_STYL="""
+        *{
+            font-family:Microsoft Yahei;
+            font-size:12px;
+            color:dimgray;
+        }
         QMainWindow{
-            background-color:#fff
+            background-color:#FBFAFA
         }
         QMenuBar{
             font-family:Microsoft Yahei;

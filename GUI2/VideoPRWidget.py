@@ -6,20 +6,25 @@
 """
 
 from time import time
-
+import configparser
 import cv2
 import numpy
 
-from PyQt5.QtCore import Qt, pyqtSlot, QBasicTimer
+from PyQt5.QtCore import Qt, QBasicTimer
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QWidget, QPushButton, QLabel, QHBoxLayout, QVBoxLayout, QComboBox, QAction, QFileDialog, \
+from PyQt5.QtWidgets import QWidget, QPushButton, QLabel, QHBoxLayout, QVBoxLayout, QComboBox, QFileDialog, \
     QInputDialog, QSlider, QCheckBox, QSpinBox
 
 from prmod.config import PlayState, VideoType
 from prmod.util.Utiles import CV2QImage, VideoPRLabel
 
 MAIN_STYL = """
-
+        *{
+            font-family:Microsoft Yahei;
+            font-size:12px;
+            color:dimgray;
+        }
+        
         QPushButton
         {
             font-family:Microsoft Yahei;
@@ -136,7 +141,7 @@ MAIN_STYL = """
         }
         """
 
-BTN_STYL="""
+BTN_STYLE="""
         QPushButton
         {
             font-family:Microsoft Yahei;
@@ -186,6 +191,8 @@ class VideoPRWidget(QWidget):
 
         self.fWindow = fwind
 
+        self.config = configparser.ConfigParser()
+
         self.cap = None
         self.timer = None
         self.playState = PlayState.STOP
@@ -203,6 +210,7 @@ class VideoPRWidget(QWidget):
         self.platelist = []
 
         self.initUI()
+        self.initData()
 
     def initData(self):
 
@@ -222,6 +230,22 @@ class VideoPRWidget(QWidget):
         self.qimg = None
         self.platelist = []
 
+        self.config.read("resources/config/siripr.ini")
+
+        if self.config.get('VIDEOPR','debug')=='True':
+            self.cb_debug.setCheckState(Qt.Checked)
+        else:
+            self.cb_debug.setCheckState(Qt.Unchecked)
+
+        if self.config.get('VIDEOPR','label')=='True':
+            self.cb_label.setCheckState(Qt.Checked)
+        else:
+            self.cb_label.setCheckState(Qt.Unchecked)
+
+        self.combobox_DetectType.setCurrentIndex(int(self.config.get('VIDEOPR', 'detecttype')))
+        self.spinbox_MaxPlates.setValue(int(self.config.get('VIDEOPR', 'maxplates')))
+
+
     def initUI(self):
         self.setStyleSheet(MAIN_STYL)
 
@@ -238,7 +262,7 @@ class VideoPRWidget(QWidget):
         self.openLabel.setFixedSize(160, 52)
 
         self.btn_Open = QPushButton('打开', self.openLabel)
-        self.btn_Open.setStyleSheet(BTN_STYL)
+        self.btn_Open.setStyleSheet(BTN_STYLE)
         self.btn_Open.setFixedSize(80, 40)
         self.btn_Open.move(0, 0)
         self.btn_Open.clicked.connect(self.on_btn_Open_clicked)
