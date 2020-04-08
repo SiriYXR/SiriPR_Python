@@ -200,7 +200,7 @@ SCROLLAREA_STYLE="""
         /*checkbox样式设置*/
         QCheckBox::indicator { 
             width: 26px;
-            height: 50px;
+            height: 30px;
         }
         /*未选中*/
         QCheckBox::indicator::unchecked {   
@@ -361,6 +361,7 @@ class SettingWidget(QWidget):
         self.label_ImgPR_detecttype.setFixedSize(65, 30)
         self.label_ImgPR_detecttype.setAlignment(Qt.AlignLeft | Qt.AlignCenter)
         self.combobox_ImgPR_detecttype = QComboBox()
+        self.combobox_ImgPR_detecttype.setFixedSize(120,20)
         self.combobox_ImgPR_detecttype.addItems(
             ['SOBEL', 'COLOR', 'CMSER', 'SOBEL&COLOR', 'SOBEL&CMSER', 'COLOR&CMSER', 'All'])
 
@@ -387,6 +388,23 @@ class SettingWidget(QWidget):
         layout_ImgPR_maxplates.addWidget(self.spinbox_ImgPR_maxplates)
         layout_ImgPR_maxplates.addStretch()
 
+        self.label_ImgPR_OutPutPath = QLabel('识别结果保存路径:')
+        self.label_ImgPR_OutPutPath.setFixedSize(200, 20)
+        self.label_ImgPR_OutPutPath.setAlignment(Qt.AlignLeft)
+        self.lineedit_ImgPR_OutPutPath = QLineEdit()
+        self.lineedit_ImgPR_OutPutPath.setFixedHeight(30)
+        self.btn_ImgPR_OutPutPath = QPushButton('...')
+        self.btn_ImgPR_OutPutPath.setStyleSheet(BTN_STYLE)
+        self.btn_ImgPR_OutPutPath.setFixedSize(30, 30)
+        self.btn_ImgPR_OutPutPath.clicked.connect(self.on_btn_ImgPR_OutPutPath_clicked)
+
+        layout_ImgPR_OutPutPath = QGridLayout()
+        layout_ImgPR_OutPutPath.setContentsMargins(0, 5, 0, 0)
+        layout_ImgPR_OutPutPath.setSpacing(5)
+        layout_ImgPR_OutPutPath.addWidget(self.label_ImgPR_OutPutPath, 0, 0)
+        layout_ImgPR_OutPutPath.addWidget(self.lineedit_ImgPR_OutPutPath, 1, 0)
+        layout_ImgPR_OutPutPath.addWidget(self.btn_ImgPR_OutPutPath, 1, 1)
+
         layout_ImgPR = QVBoxLayout()
         layout_ImgPR.setContentsMargins(5, 10, 5, 0)
         layout_ImgPR.setSpacing(10)
@@ -395,6 +413,7 @@ class SettingWidget(QWidget):
         layout_ImgPR.addLayout(layout_ImgPR_label)
         layout_ImgPR.addLayout(layout_ImgPR_detecttype)
         layout_ImgPR.addLayout(layout_ImgPR_maxplates)
+        layout_ImgPR.addLayout(layout_ImgPR_OutPutPath)
 
         """------------------视频识别设置------------------"""
         self.label_VideoPR = QLabel('图片识别设置')
@@ -431,6 +450,7 @@ class SettingWidget(QWidget):
         self.label_VideoPR_detecttype.setFixedSize(65, 30)
         self.label_VideoPR_detecttype.setAlignment(Qt.AlignLeft | Qt.AlignCenter)
         self.combobox_VideoPR_detecttype = QComboBox()
+        self.combobox_VideoPR_detecttype.setFixedSize(120, 20)
         self.combobox_VideoPR_detecttype.addItems(
             ['SOBEL', 'COLOR', 'CMSER', 'SOBEL&COLOR', 'SOBEL&CMSER', 'COLOR&CMSER', 'All'])
 
@@ -457,6 +477,23 @@ class SettingWidget(QWidget):
         layout_VideoPR_maxplates.addWidget(self.spinbox_VideoPR_maxplates)
         layout_VideoPR_maxplates.addStretch()
 
+        self.label_VideoPR_OutPutPath = QLabel('识别结果保存路径:')
+        self.label_VideoPR_OutPutPath.setFixedSize(200, 20)
+        self.label_VideoPR_OutPutPath.setAlignment(Qt.AlignLeft)
+        self.lineedit_VideoPR_OutPutPath = QLineEdit()
+        self.lineedit_VideoPR_OutPutPath.setFixedHeight(30)
+        self.btn_VideoPR_OutPutPath = QPushButton('...')
+        self.btn_VideoPR_OutPutPath.setStyleSheet(BTN_STYLE)
+        self.btn_VideoPR_OutPutPath.setFixedSize(30, 30)
+        self.btn_VideoPR_OutPutPath.clicked.connect(self.on_btn_VideoPR_OutPutPath_clicked)
+
+        layout_VideoPR_OutPutPath = QGridLayout()
+        layout_VideoPR_OutPutPath.setContentsMargins(0, 5, 0, 0)
+        layout_VideoPR_OutPutPath.setSpacing(5)
+        layout_VideoPR_OutPutPath.addWidget(self.label_VideoPR_OutPutPath, 0, 0)
+        layout_VideoPR_OutPutPath.addWidget(self.lineedit_VideoPR_OutPutPath, 1, 0)
+        layout_VideoPR_OutPutPath.addWidget(self.btn_VideoPR_OutPutPath, 1, 1)
+
         layout_VideoPR = QVBoxLayout()
         layout_VideoPR.setContentsMargins(5, 10, 5, 0)
         layout_VideoPR.setSpacing(10)
@@ -465,6 +502,7 @@ class SettingWidget(QWidget):
         layout_VideoPR.addLayout(layout_VideoPR_label)
         layout_VideoPR.addLayout(layout_VideoPR_detecttype)
         layout_VideoPR.addLayout(layout_VideoPR_maxplates)
+        layout_VideoPR.addLayout(layout_VideoPR_OutPutPath)
 
 
 
@@ -478,7 +516,7 @@ class SettingWidget(QWidget):
         sa_contentLayout.addStretch()
 
         self.sa_contentWidget = QWidget()
-        self.sa_contentWidget.setFixedSize(600, 900)
+        self.sa_contentWidget.setFixedSize(600, 1000)
         self.sa_contentWidget.setLayout(sa_contentLayout)
 
         self.sa_Settings = QScrollArea()
@@ -537,6 +575,7 @@ class SettingWidget(QWidget):
             self.checkbox_ImgPR_label.setCheckState(Qt.Unchecked)
         self.combobox_ImgPR_detecttype.setCurrentIndex(int(self.config.get('IMGPR','detecttype')))
         self.spinbox_ImgPR_maxplates.setValue(int(self.config.get('IMGPR','maxplates')))
+        self.lineedit_ImgPR_OutPutPath.setText(self.config.get('IMGPR','outputpath'))
 
         if self.config.get('VIDEOPR','debug')=='True':
             self.checkbox_VideoPR_debug.setCheckState(Qt.Checked)
@@ -548,6 +587,7 @@ class SettingWidget(QWidget):
             self.checkbox_VideoPR_label.setCheckState(Qt.Unchecked)
         self.combobox_VideoPR_detecttype.setCurrentIndex(int(self.config.get('VIDEOPR','detecttype')))
         self.spinbox_VideoPR_maxplates.setValue(int(self.config.get('VIDEOPR','maxplates')))
+        self.lineedit_VideoPR_OutPutPath.setText(self.config.get('VIDEOPR', 'outputpath'))
 
     def defualtData(self):
         self.config.read("resources/config/defualt.ini")
@@ -584,6 +624,16 @@ class SettingWidget(QWidget):
         if len(path) != 0:
             self.lineedit_ChineseMapping.setText(path)
 
+    def on_btn_ImgPR_OutPutPath_clicked(self):
+        path = QFileDialog.getExistingDirectory(self, "设置图片识别结果保存路径", "./resources/image/result")
+        if len(path) != 0:
+            self.lineedit_ImgPR_OutPutPath.setText(path)
+
+    def on_btn_VideoPR_OutPutPath_clicked(self):
+        path = QFileDialog.getExistingDirectory(self, "设置图片识别结果保存路径", "./resources/video/result")
+        if len(path) != 0:
+            self.lineedit_VidoePR_OutPutPath.setText(path)
+
     def on_btn_defualt_clicked(self):
         self.defualtData()
 
@@ -610,6 +660,7 @@ class SettingWidget(QWidget):
             self.config.set('IMGPR', 'label', "False")
         self.config.set('IMGPR', 'detecttype', str(self.combobox_ImgPR_detecttype.currentIndex()))
         self.config.set('IMGPR', 'maxplates', str(self.spinbox_ImgPR_maxplates.value()))
+        self.config.set('IMGPR', 'outputpath',self.lineedit_ImgPR_OutPutPath.text())
 
         if self.checkbox_VideoPR_debug.isChecked():
             self.config.set('VIDEOPR', 'debug',"True")
@@ -621,6 +672,7 @@ class SettingWidget(QWidget):
             self.config.set('VIDEOPR', 'label', "False")
         self.config.set('VIDEOPR', 'detecttype', str(self.combobox_VideoPR_detecttype.currentIndex()))
         self.config.set('VIDEOPR', 'maxplates', str(self.spinbox_VideoPR_maxplates.value()))
+        self.config.set('VIDEOPR', 'outputpath', self.lineedit_VideoPR_OutPutPath.text())
 
         self.config.write(open("resources/config/siripr.ini", "w"))
         self.fWindow.plateRecognize.loadModel()

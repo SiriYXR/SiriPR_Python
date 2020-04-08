@@ -109,3 +109,18 @@ def _async_raise(tid, exctype):
 def stop_thread(thread):
     _async_raise(thread.ident, SystemExit)
 
+
+def TickTimeProcess(t):
+    if t <60:
+        return '{:.2f}秒'.format(t)
+    elif t<60*60:
+        i=int(t)
+        m=i/60
+        s=t-m*60
+        return '{}分 {:.2f}秒'.format(m,s)
+    else:
+        i = int(t)
+        h = i/(60*60)
+        m = (i-h*60*60)/60
+        s = t - m * 60-h*60*60
+        return '{}小时 {}分 {:.2f}秒'.format(h,m,s)

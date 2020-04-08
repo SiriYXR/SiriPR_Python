@@ -97,3 +97,18 @@ class ImgFileWidget(QWidget):
 
     def showImg(self):
         self.fWindow.showImageFile(self.file_path)
+
+    def toStr(self):
+        detectTypeList=['SOBEL', 'COLOR', 'CMSER', 'SOBEL&COLOR', 'SOBEL&CMSER', 'COLOR&CMSER', 'All']
+        dic={'file_path':self.file_path,
+             'file_name':self.file_name,
+             'debug_value':self.debug_value,
+             'label_value':self.label_value,
+             'detecttype_value':detectTypeList[self.detecttype_value],
+             'maxplates_value' : self.maxplates_value}
+        plateList=[]
+        for i in self.plates:
+            plate_license, plate_x, plate_y, plate_w, plate_h = i
+            plateList.append([plate_license, plate_x, plate_y, plate_w, plate_h])
+        dic['plates']=plateList
+        return str(dic)

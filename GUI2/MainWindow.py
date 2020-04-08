@@ -68,7 +68,7 @@ MAINWINDOW_STYL="""
             color:dimgray;
         }
         QMainWindow{
-            background-color:#FBFAFA
+            background-color:#FBFAFA;
         }
         QMenuBar{
             font-family:Microsoft Yahei;
@@ -96,10 +96,10 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(QIcon('GUI2/img/icon/siripr_icon_1000_1000.png'))
         self.statusBar().showMessage('欢迎使用SiriPR')
 
-        self.imgPRBtn = QPushButton('图像识别')
+        self.imgPRBtn = QPushButton('图片识别')
         self.imgPRBtn.setFixedHeight(30)
         self.imgPRBtn.setStyleSheet(TOP_BTN_ON_STYLE)
-        self.imgPRBtn.setStatusTip('图像识别')
+        self.imgPRBtn.setStatusTip('图片识别')
         self.imgPRBtn.clicked.connect(self.on_ImgRecognizeAct_clicked)
 
         self.videoPRBtn = QPushButton('视频识别')

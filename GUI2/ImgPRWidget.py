@@ -5,15 +5,15 @@
 @time:2020/4/5 15:58
 """
 
+import configparser
 from time import time
-import os
+from PIL import Image, ImageDraw, ImageFont
 
-from PyQt5.QtCore import Qt, pyqtSlot
-from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QWidget,  QPushButton, QVBoxLayout, QFileDialog, QCheckBox, QHBoxLayout, QScrollArea, \
     QSpinBox
 
 from GUI2.ImgFileWidget import ImgFileWidget
+from GUI2.ImgOutPortWidget import ImgOutPortWidget
 
 from prmod.core.CPlate import CPlate
 from prmod.util.Utiles import *
@@ -231,15 +231,15 @@ SCROLLAREA_STYLE="""
         """
 
 IOS_CHECKBOX_STYLE="""
-        /*RadioButton和checkbox字体和间距设置*/
-        QRadioButton ,QCheckBox{
+        /*checkbox字体和间距设置*/
+        QCheckBox{
             spacing: 5px;
             font-size: 12px;
         }
         /*checkbox样式设置*/
         QCheckBox::indicator { 
             width: 26px;
-            height: 50px;
+            height: 30px;
         }
         /*未选中*/
         QCheckBox::indicator::unchecked {   
@@ -293,6 +293,7 @@ class ImgPRWidget(QWidget):
         self.outportBtn = QPushButton("导出")
         self.outportBtn.setFixedSize(40, 25)
         self.outportBtn.setStatusTip('导出图片识别结果')
+        self.outportBtn.clicked.connect(self.on_btn_outport_clicked)
 
         topLayout = QHBoxLayout()
         topLayout.setContentsMargins(0, 0, 0, 0)
@@ -402,14 +403,19 @@ class ImgPRWidget(QWidget):
         """--------------------setinglayout------------------------"""
         self.cb_debug = QCheckBox("调试")
         self.cb_debug.setStyleSheet(IOS_CHECKBOX_STYLE)
+        self.cb_debug.clicked.connect(self.on_cb_debug_clicked)
+
         self.cb_label = QCheckBox("标注结果")
         self.cb_label.setStyleSheet(IOS_CHECKBOX_STYLE)
+        self.cb_label.clicked.connect(self.on_cb_label_clicked)
 
         self.label_DetectType = QLabel(' 检测类型')
         self.combobox_DetectType = QComboBox()
+        self.combobox_DetectType.setFixedSize(120, 20)
         self.combobox_DetectType.addItems(
             ['SOBEL', 'COLOR', 'CMSER', 'SOBEL&COLOR', 'SOBEL&CMSER', 'COLOR&CMSER', 'All'])
         self.combobox_DetectType.setStatusTip('设置检测类型')
+        self.combobox_DetectType.currentIndexChanged.connect(self.on_combobox_DetectType_currentIndexChanged)
 
         self.label_MaxPlates = QLabel(' 最大车牌上限')
         self.spinbox_MaxPlates = QSpinBox()
@@ -418,6 +424,7 @@ class ImgPRWidget(QWidget):
         self.spinbox_MaxPlates.setMinimum(1)
         self.spinbox_MaxPlates.setMaximum(10)
         self.spinbox_MaxPlates.setStatusTip('设置单张图片检测车牌最大数量')
+        self.spinbox_MaxPlates.valueChanged.connect(self.on_spinbox_MaxPlates_valueChanged)
 
         settingLayout = QHBoxLayout()
         settingLayout.setContentsMargins(5, 5, 5, 0)
@@ -517,6 +524,11 @@ class ImgPRWidget(QWidget):
         self.fWindow.statusBar().showMessage('成功移除{}张图片。'.format(len(self.checkedlist)))
         self.updateCheckedList()
 
+    def on_btn_outport_clicked(self):
+        if len(self.checkedlist)==0:
+            self.fWindow.statusBar().showMessage('当前没有被选中的图片。')
+            return
+        w=ImgOutPortWidget(self)
 
     def on_btn_recognize_clicked(self):
 
@@ -532,7 +544,7 @@ class ImgPRWidget(QWidget):
             self.filelist[self.fileindex].plates = self.fWindow.plateRecognize.plateRecognize(numpy.copy(self.cvimg))
             end = time()
             runtime = end - begin
-
+            print(self.filelist[self.fileindex].toStr())
             platenum=len(self.filelist[self.fileindex].plates)
             if platenum != 0:
                 self.plateindex = 0
@@ -584,6 +596,28 @@ class ImgPRWidget(QWidget):
         self.combobox_Plate.setCurrentIndex(self.plateindex)
         self.on_combobox_Plate_clicked()
 
+    def on_cb_debug_clicked(self):
+        if self.fileindex>=0:
+            if self.cb_debug.isChecked():
+                self.filelist[self.fileindex].debug_value = True
+            else:
+                self.filelist[self.fileindex].debug_value = False
+
+    def on_cb_label_clicked(self):
+        if self.fileindex>=0:
+            if self.cb_label.isChecked():
+                self.filelist[self.fileindex].label_value = True
+            else:
+                self.filelist[self.fileindex].label_value = False
+
+    def on_combobox_DetectType_currentIndexChanged(self):
+        if self.fileindex >= 0:
+            self.filelist[self.fileindex].detecttype_value=self.combobox_DetectType.currentIndex()
+
+    def on_spinbox_MaxPlates_valueChanged(self):
+        if self.fileindex >= 0:
+            self.filelist[self.fileindex].maxplates_value=self.spinbox_MaxPlates.value()
+
     def initPRWidget(self):
         self.label_RunningMSG.clear()
         self.imgLabel.clear()
@@ -613,8 +647,14 @@ class ImgPRWidget(QWidget):
         self.upfateFileIndex()
         self.combobox_DetectType.setCurrentIndex(self.filelist[self.fileindex].detecttype_value)
         self.spinbox_MaxPlates.setValue(self.filelist[self.fileindex].maxplates_value)
-        self.cb_debug.setCheckState(self.filelist[self.fileindex].debug_value)
-        self.cb_label.setCheckState(self.filelist[self.fileindex].label_value)
+        if self.filelist[self.fileindex].debug_value:
+            self.cb_debug.setCheckState(Qt.Checked)
+        else:
+            self.cb_debug.setCheckState(Qt.Unchecked)
+        if self.filelist[self.fileindex].label_value:
+            self.cb_label.setCheckState(Qt.Checked)
+        else:
+            self.cb_label.setCheckState(Qt.Unchecked)
         self.combobox_Plate.clear()
         for i in range(len(self.filelist[self.fileindex].plates)):
             plate_license, plate_x, plate_y, plate_w, plate_h = self.filelist[self.fileindex].plates[i]
@@ -644,14 +684,37 @@ class ImgPRWidget(QWidget):
 
     def setShowPlate(self):
         self.combobox_Plate.setCurrentIndex(self.plateindex)
-        plate_license, plate_x, plate_y, plate_w, plate_h = self.filelist[self.fileindex].plates[self.plateindex]
         if self.cb_label.isChecked():
-            temp = numpy.copy(self.cvimg)
-            temp = cv2.rectangle(temp, (plate_x, plate_y),
-                                 (plate_x + plate_w, plate_y + plate_h), (0, 255, 0), 2)
+            temp=self.drawImgLabel(self.cvimg,self.filelist[self.fileindex].plates,self.plateindex)
             self.setShowPIMG(temp)
         else:
             self.setShowQIMG()
+
+    def drawImgLabel(self,imgIn,plates,index=-1):
+        imgOut = numpy.copy(imgIn)
+        # 转换为PIL格式
+        imgOut = Image.fromarray(cv2.cvtColor(imgOut, cv2.COLOR_BGR2RGB))
+
+        # 创建一个可以在给定图像上绘图的对象
+        draw = ImageDraw.Draw(imgOut)
+        for i in range(len(plates)):
+            plate_license, plate_x, plate_y, plate_w, plate_h = plates[i]
+            color = '#0f0'
+            if i == index:
+                color = '#f00'
+            # 文字背景
+            draw.rectangle((plate_x, plate_y-20, plate_x+110, plate_y),color)
+            # 字体的格式
+            fontStyle = ImageFont.truetype(
+                "font/simsun.ttc", 16, encoding="utf-8")
+            # 绘制文本
+            draw.text((plate_x, plate_y-18), plate_license, '#000', font=fontStyle)
+
+            # 绘制矩形框
+            draw.line([(plate_x, plate_y), (plate_x+plate_w, plate_y), (plate_x+plate_w, plate_y+plate_h),(plate_x, plate_y+plate_h),(plate_x, plate_y)], color, width=2)
+
+        # 转换回OpenCV格式
+        return cv2.cvtColor(numpy.asarray(imgOut), cv2.COLOR_RGB2BGR)
 
     def keyPressEvent(self, event):
 
@@ -700,3 +763,21 @@ class ImgPRWidget(QWidget):
             for i in range(len(self.filelist)):
                 self.filelist[i].checkBox.setCheckState(Qt.Unchecked)
         self.updateCheckedList()
+
+    def outPutImg(self,index,pattern):
+
+        config = configparser.ConfigParser()
+        config.read("resources/config/siripr.ini")
+        path=config.get('IMGPR', 'outputpath')
+        pureFileName=self.filelist[index].file_name.split('.')[0]
+        cvimg = cv_imread(self.filelist[index].file_path, 1)
+
+        if pattern==0 or len(self.filelist[index].plates)==0 :
+            self.filelist[index].plates=self.fWindow.plateRecognize.plateRecognize(numpy.copy(cvimg))
+
+        cvimg=self.drawImgLabel(cvimg,self.filelist[index].plates)
+        cv2.imencode('.jpg', cvimg)[1].tofile(path+'/'+pureFileName+'.jpg')
+
+        file=open(path+'/'+pureFileName+'.txt','w+',encoding='utf8')
+        file.write(self.filelist[index].toStr())
+        file.close()

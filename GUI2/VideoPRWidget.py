@@ -172,7 +172,7 @@ IOS_CHECKBOX_STYLE="""
         /*checkbox样式设置*/
         QCheckBox::indicator { 
             width: 26px;
-            height: 50px;
+            height: 30px;
         }
         /*未选中*/
         QCheckBox::indicator::unchecked {   
@@ -340,6 +340,7 @@ class VideoPRWidget(QWidget):
 
         self.label_DetectType = QLabel(' 检测类型')
         self.combobox_DetectType = QComboBox()
+        self.combobox_DetectType.setFixedSize(120, 20)
         self.combobox_DetectType.addItems(
             ['SOBEL', 'COLOR', 'CMSER', 'SOBEL&COLOR', 'SOBEL&CMSER', 'COLOR&CMSER', 'All'])
         self.combobox_DetectType.setStatusTip('设置检测类型')
