@@ -416,9 +416,35 @@ class SettingWidget(QWidget):
         layout_ImgPR.addLayout(layout_ImgPR_OutPutPath)
 
         """------------------视频识别设置------------------"""
-        self.label_VideoPR = QLabel('图片识别设置')
+        self.label_VideoPR = QLabel('视频识别设置')
         self.label_VideoPR.setFixedHeight(20)
         self.label_VideoPR.setAlignment(Qt.AlignCenter)
+
+        self.label_VideoPR_recognize = QLabel('识别:')
+        self.label_VideoPR_recognize.setFixedSize(40, 30)
+        self.label_VideoPR_recognize.setAlignment(Qt.AlignLeft | Qt.AlignCenter)
+        self.checkbox_VideoPR_recognize = QCheckBox()
+        self.checkbox_VideoPR_recognize.setFixedSize(100, 30)
+
+        layout_VideoPR_recognize = QHBoxLayout()
+        layout_VideoPR_recognize.setContentsMargins(0, 5, 0, 0)
+        layout_VideoPR_recognize.setSpacing(5)
+        layout_VideoPR_recognize.addWidget(self.label_VideoPR_recognize)
+        layout_VideoPR_recognize.addWidget(self.checkbox_VideoPR_recognize)
+        layout_VideoPR_recognize.addStretch()
+
+        self.label_VideoPR_record = QLabel('录制:')
+        self.label_VideoPR_record.setFixedSize(40, 30)
+        self.label_VideoPR_record.setAlignment(Qt.AlignLeft | Qt.AlignCenter)
+        self.checkbox_VideoPR_record = QCheckBox()
+        self.checkbox_VideoPR_record.setFixedSize(100, 30)
+
+        layout_VideoPR_record = QHBoxLayout()
+        layout_VideoPR_record.setContentsMargins(0, 5, 0, 0)
+        layout_VideoPR_record.setSpacing(5)
+        layout_VideoPR_record.addWidget(self.label_VideoPR_record)
+        layout_VideoPR_record.addWidget(self.checkbox_VideoPR_record)
+        layout_VideoPR_record.addStretch()
 
         self.label_VideoPR_debug = QLabel('调试:')
         self.label_VideoPR_debug.setFixedSize(40, 30)
@@ -498,6 +524,8 @@ class SettingWidget(QWidget):
         layout_VideoPR.setContentsMargins(5, 10, 5, 0)
         layout_VideoPR.setSpacing(10)
         layout_VideoPR.addWidget(self.label_VideoPR)
+        layout_VideoPR.addLayout(layout_VideoPR_recognize)
+        layout_VideoPR.addLayout(layout_VideoPR_record)
         layout_VideoPR.addLayout(layout_VideoPR_debug)
         layout_VideoPR.addLayout(layout_VideoPR_label)
         layout_VideoPR.addLayout(layout_VideoPR_detecttype)
@@ -516,7 +544,7 @@ class SettingWidget(QWidget):
         sa_contentLayout.addStretch()
 
         self.sa_contentWidget = QWidget()
-        self.sa_contentWidget.setFixedSize(600, 1000)
+        self.sa_contentWidget.setFixedSize(600, 1100)
         self.sa_contentWidget.setLayout(sa_contentLayout)
 
         self.sa_Settings = QScrollArea()
@@ -577,6 +605,14 @@ class SettingWidget(QWidget):
         self.spinbox_ImgPR_maxplates.setValue(int(self.config.get('IMGPR','maxplates')))
         self.lineedit_ImgPR_OutPutPath.setText(self.config.get('IMGPR','outputpath'))
 
+        if self.config.get('VIDEOPR','recognize')=='True':
+            self.checkbox_VideoPR_recognize.setCheckState(Qt.Checked)
+        else:
+            self.checkbox_VideoPR_recognize.setCheckState(Qt.Unchecked)
+        if self.config.get('VIDEOPR','record')=='True':
+            self.checkbox_VideoPR_record.setCheckState(Qt.Checked)
+        else:
+            self.checkbox_VideoPR_record.setCheckState(Qt.Unchecked)
         if self.config.get('VIDEOPR','debug')=='True':
             self.checkbox_VideoPR_debug.setCheckState(Qt.Checked)
         else:
@@ -643,6 +679,10 @@ class SettingWidget(QWidget):
     def on_btn_apply_clicked(self):
         self.saveConfig()
 
+    def show(self):
+        self.resetData()
+        super().show()
+
     def saveConfig(self):
         self.config.set('Model', 'SVM', self.lineedit_SVM.text())
         self.config.set('Model', 'ANN', self.lineedit_ANN.text())
@@ -662,6 +702,14 @@ class SettingWidget(QWidget):
         self.config.set('IMGPR', 'maxplates', str(self.spinbox_ImgPR_maxplates.value()))
         self.config.set('IMGPR', 'outputpath',self.lineedit_ImgPR_OutPutPath.text())
 
+        if self.checkbox_VideoPR_recognize.isChecked():
+            self.config.set('VIDEOPR', 'recognize',"True")
+        else:
+            self.config.set('VIDEOPR', 'recognize', "False")
+        if self.checkbox_VideoPR_record.isChecked():
+            self.config.set('VIDEOPR', 'record',"True")
+        else:
+            self.config.set('VIDEOPR', 'record', "False")
         if self.checkbox_VideoPR_debug.isChecked():
             self.config.set('VIDEOPR', 'debug',"True")
         else:

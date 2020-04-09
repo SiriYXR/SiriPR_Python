@@ -69,10 +69,10 @@ class ImgFileWidget(QWidget):
 
         self.config.read("resources/config/siripr.ini")
 
-        self.debug_value=(self.config.get('VIDEOPR', 'debug') == 'True')
-        self.label_value=(self.config.get('VIDEOPR', 'label') == 'True')
-        self.detecttype_value=int(self.config.get('VIDEOPR', 'detecttype'))
-        self.maxplates_value=int(self.config.get('VIDEOPR', 'maxplates'))
+        self.debug_value=(self.config.get('IMGPR', 'debug') == 'True')
+        self.label_value=(self.config.get('IMGPR', 'label') == 'True')
+        self.detecttype_value=int(self.config.get('IMGPR', 'detecttype'))
+        self.maxplates_value=int(self.config.get('IMGPR', 'maxplates'))
 
     def initUI(self):
         self.setFixedHeight(25)
@@ -100,15 +100,13 @@ class ImgFileWidget(QWidget):
 
     def toStr(self):
         detectTypeList=['SOBEL', 'COLOR', 'CMSER', 'SOBEL&COLOR', 'SOBEL&CMSER', 'COLOR&CMSER', 'All']
-        dic={'file_path':self.file_path,
-             'file_name':self.file_name,
-             'debug_value':self.debug_value,
-             'label_value':self.label_value,
-             'detecttype_value':detectTypeList[self.detecttype_value],
-             'maxplates_value' : self.maxplates_value}
-        plateList=[]
+        strOut = ""
+        strOut += 'file_path: '+self.file_path+'\n'
+        strOut += 'file_name: '+self.file_name+'\n'
+        strOut += 'detecttype: '+detectTypeList[self.detecttype_value]+'\n'
+        strOut += 'maxplates: '+str(self.maxplates_value)+'\n'
         for i in self.plates:
             plate_license, plate_x, plate_y, plate_w, plate_h = i
-            plateList.append([plate_license, plate_x, plate_y, plate_w, plate_h])
-        dic['plates']=plateList
-        return str(dic)
+            strOut+="plate_license: {}\tx: {}\ty: {}\tw: {}\th: {}\n".format(plate_license, plate_x, plate_y, plate_w, plate_h)
+
+        return strOut

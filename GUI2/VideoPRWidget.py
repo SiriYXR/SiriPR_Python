@@ -5,10 +5,13 @@
 @time:2020/4/5 15:59
 """
 
+import os
 from time import time
+import datetime
 import configparser
 import cv2
 import numpy
+from PIL import Image, ImageDraw, ImageFont
 
 from PyQt5.QtCore import Qt, QBasicTimer
 from PyQt5.QtGui import QPixmap
@@ -16,7 +19,7 @@ from PyQt5.QtWidgets import QWidget, QPushButton, QLabel, QHBoxLayout, QVBoxLayo
     QInputDialog, QSlider, QCheckBox, QSpinBox
 
 from prmod.config import PlayState, VideoType
-from prmod.util.Utiles import CV2QImage, VideoPRLabel
+from prmod.util.Utiles import CV2QImage
 
 MAIN_STYL = """
         *{
@@ -198,7 +201,10 @@ class VideoPRWidget(QWidget):
         self.playState = PlayState.STOP
         self.videoType = None
         self.videoFile = None
+        self.fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        self.videoWriter=None
 
+        self.cap_name=""
         self.cap_frames_count = 0
         self.cap_currentframe = 0
         self.cap_fps = 0
@@ -207,7 +213,7 @@ class VideoPRWidget(QWidget):
 
         self.cvimg = None
         self.qimg = None
-        self.platelist = []
+        self.resultlist_record = []
 
         self.initUI()
         self.initData()
@@ -228,9 +234,19 @@ class VideoPRWidget(QWidget):
 
         self.cvimg = None
         self.qimg = None
-        self.platelist = []
+        self.resultlist_record.clear()
 
         self.config.read("resources/config/siripr.ini")
+
+        if self.config.get('VIDEOPR','recognize')=='True':
+            self.cb_Recognize.setCheckState(Qt.Checked)
+        else:
+            self.cb_Recognize.setCheckState(Qt.Unchecked)
+
+        if self.config.get('VIDEOPR','record')=='True':
+            self.cb_Record.setCheckState(Qt.Checked)
+        else:
+            self.cb_Record.setCheckState(Qt.Unchecked)
 
         if self.config.get('VIDEOPR','debug')=='True':
             self.cb_debug.setCheckState(Qt.Checked)
@@ -277,7 +293,7 @@ class VideoPRWidget(QWidget):
         self.imglayout.setAlignment(Qt.AlignCenter)
         self.imglayout.addWidget(self.openLabel)
 
-        self.imgLabel = VideoPRLabel(self)
+        self.imgLabel = QLabel()
         self.imgLabel.setAlignment(Qt.AlignCenter)
         self.imgLabel.setMaximumSize(10000, 10000)
         self.imgLabel.setStyleSheet("QLabel{background-color:black;}")
@@ -322,6 +338,9 @@ class VideoPRWidget(QWidget):
         self.cb_Recognize = QCheckBox("识别")
         self.cb_Recognize.setStyleSheet(IOS_CHECKBOX_STYLE)
 
+        self.cb_Record = QCheckBox("录制")
+        self.cb_Record.setStyleSheet(IOS_CHECKBOX_STYLE)
+
         self.label_RecognizeMSG = QLabel()
         self.label_RecognizeMSG.setAlignment(Qt.AlignCenter)
 
@@ -329,6 +348,7 @@ class VideoPRWidget(QWidget):
         self.prOPlayout.setAlignment(Qt.AlignLeft)
 
         self.prOPlayout.addWidget(self.cb_Recognize)
+        self.prOPlayout.addWidget(self.cb_Record)
         self.prOPlayout.addWidget(self.label_RecognizeMSG)
         self.prOPlayout.setStretchFactor(self.label_RecognizeMSG, 1)
 
@@ -386,6 +406,7 @@ class VideoPRWidget(QWidget):
                                                          "视频文件(*.mp4 *.avi *.rmvb *.mkv *.flv)")[0]
             if len(self.videoFile) == 0:
                 return
+            self.cap_name = os.path.basename(self.videoFile).split('.')[0]
             if self.OpenVideo():
                 self.videoType = VideoType.VIDEOFILE
                 self.initPlayer()
@@ -395,7 +416,9 @@ class VideoPRWidget(QWidget):
 
         elif index == 1:
             self.videoFile, ok = QInputDialog.getText(self, 'URL', '输入URL:')
+
             if ok:
+                self.cap_name = 'URL'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")
                 if self.OpenVideo():
                     self.videoType = VideoType.URL
                     self.initPlayer()
@@ -406,6 +429,7 @@ class VideoPRWidget(QWidget):
 
             self.videoFile, ok = QInputDialog.getInt(self, '摄像头端口', '输入摄像头端口:', 0, 0, 100, 1)
             if ok:
+                self.cap_name = "CAP"+datetime.datetime.now().strftime("%Y%m%d%H%M%S")
                 if self.OpenVideo():
                     self.videoType = VideoType.CAM
                     self.initPlayer()
@@ -445,6 +469,10 @@ class VideoPRWidget(QWidget):
             self.sld_Frame.setEnabled(True)
             self.sld_Frame.setMaximum(self.cap_frames_count)
 
+        path = self.config.get('VIDEOPR', 'outputpath') + '/' + self.cap_name + '.avi'
+        self.videoWriter = cv2.VideoWriter(path, self.fourcc, self.cap_fps,
+                                            (int(self.cap_width), int(self.cap_height)))
+
         self.timer = QBasicTimer()
         self.timer.start(1000 / self.cap_fps, self)
 
@@ -454,6 +482,12 @@ class VideoPRWidget(QWidget):
     def stopPlayer(self):
         if self.cap.isOpened():
             self.cap.release()
+            self.videoWriter.release()
+
+            f=open(self.config.get('VIDEOPR', 'outputpath') + '/' + self.cap_name + '.txt','w+',encoding='utf8')
+            f.write(self.resultStr())
+            f.close()
+
         self.imgLabel.clear()
         self.openLabel.show()
         self.initButton()
@@ -488,19 +522,24 @@ class VideoPRWidget(QWidget):
                 self.fWindow.plateRecognize.setMaxPlates(self.spinbox_MaxPlates.value())
 
                 begin = time()
-                self.platelist = self.fWindow.plateRecognize.plateRecognize(cvtemp)
+                platelist = self.fWindow.plateRecognize.plateRecognize(cvtemp)
                 end = time()
                 runtime = end - begin
 
                 if self.cb_label.isChecked():
-                    for i in range(len(self.platelist)):
-                        license, x, y, w, h = self.platelist[i]
-                        cvtemp = cv2.rectangle(cvtemp, (x, y),
-                                             (x + w, y + h), (0, 255, 0), 2)
+                    cvtemp = self.drawImgLabel(cvtemp,platelist)
 
                 self.label_RecognizeMSG.setText(
-                    '发现 {plates} 张车牌   运行时间:{runtime:.3f}s'.format(plates=len(self.platelist),
+                    '发现 {plates} 张车牌   运行时间:{runtime:.3f}s'.format(plates=len(platelist),
                                                                             runtime=runtime))
+
+            if self.cb_Record.isChecked():
+                self.videoWriter.write(cvtemp)
+                if len(platelist)>0:
+                    self.resultlist_record.append({'frame':self.cap_currentframe,
+                                                  'detecttype':self.combobox_DetectType.currentIndex(),
+                                                  'maxplates':self.spinbox_MaxPlates.value(),
+                                                  'plates':platelist})
 
             qtemp = CV2QImage(cvtemp)
             self.imgLabel.setPixmap(QPixmap.fromImage(qtemp))
@@ -516,6 +555,34 @@ class VideoPRWidget(QWidget):
                     fps=self.cap_fps, \
                     width=self.cap_width, \
                     height=self.cap_height))
+
+    def drawImgLabel(self,imgIn,plates):
+        imgOut=numpy.copy(imgIn)
+
+        # 转换为PIL格式
+        imgOut = Image.fromarray(cv2.cvtColor(imgOut, cv2.COLOR_BGR2RGB))
+
+        # 创建一个可以在给定图像上绘图的对象
+        draw = ImageDraw.Draw(imgOut)
+        for i in range(len(plates)):
+            plate_license, plate_x, plate_y, plate_w, plate_h = plates[i]
+            color = '#0f0'
+            # 文字背景
+            draw.rectangle((plate_x, plate_y - 20, plate_x + 110, plate_y), color)
+            # 字体的格式
+            fontStyle = ImageFont.truetype(
+                "font/simsun.ttc", 16, encoding="utf-8")
+            # 绘制文本
+            draw.text((plate_x, plate_y - 18), plate_license, '#000', font=fontStyle)
+
+            # 绘制矩形框
+            draw.line([(plate_x, plate_y), (plate_x + plate_w, plate_y), (plate_x + plate_w, plate_y + plate_h),
+                       (plate_x, plate_y + plate_h), (plate_x, plate_y)], color, width=2)
+
+        # 转换回OpenCV格式
+        return cv2.cvtColor(numpy.asarray(imgOut), cv2.COLOR_RGB2BGR)
+
+        return imgOut
 
     def frameSlidValueChange(self, value):
         if value != self.cap_currentframe:
@@ -578,3 +645,18 @@ class VideoPRWidget(QWidget):
             return
 
         super().keyPressEvent(event)
+
+    def resultStr(self):
+        detectTypeList = ['SOBEL', 'COLOR', 'CMSER', 'SOBEL&COLOR', 'SOBEL&CMSER', 'COLOR&CMSER', 'All']
+        strOut = ""
+
+        for i in self.resultlist_record:
+            strOut += 'frame: ' + str(i['frame']) + '\n'
+            strOut += 'detecttype: ' + detectTypeList[i['detecttype']] + '\n'
+            strOut += 'maxplates: ' + str(i['maxplates']) + '\n'
+            for j in i['plates']:
+                plate_license, plate_x, plate_y, plate_w, plate_h = j
+                strOut += "plate_license: {}\tx: {}\ty: {}\tw: {}\th: {}\n\n".format(plate_license, plate_x, plate_y, plate_w,
+                                                                                   plate_h)
+
+        return strOut
