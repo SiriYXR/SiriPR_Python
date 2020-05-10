@@ -772,7 +772,10 @@ class ImgPRWidget(QWidget):
         pureFileName=self.filelist[index].file_name.split('.')[0]
         cvimg = cv_imread(self.filelist[index].file_path, 1)
 
-        if pattern==0 or len(self.filelist[index].plates)==0 :
+        if pattern==0 or len(self.filelist[index].plates)==0:
+            self.fWindow.plateRecognize.setDebug(False)
+            self.fWindow.plateRecognize.setDetectType(self.filelist[index].detecttype_value)
+            self.fWindow.plateRecognize.setMaxPlates(self.filelist[index].maxplates_value)
             self.filelist[index].plates=self.fWindow.plateRecognize.plateRecognize(numpy.copy(cvimg))
 
         cvimg=self.drawImgLabel(cvimg,self.filelist[index].plates)
