@@ -429,7 +429,7 @@ class VideoPRWidget(QWidget):
 
             self.videoFile, ok = QInputDialog.getInt(self, '摄像头端口', '输入摄像头端口:', 0, 0, 100, 1)
             if ok:
-                self.cap_name = "CAP"+datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+                self.cap_name = "CAM"+datetime.datetime.now().strftime("%Y%m%d%H%M%S")
                 if self.OpenVideo():
                     self.videoType = VideoType.CAM
                     self.initPlayer()

@@ -381,6 +381,7 @@ class ImgPRWidget(QWidget):
         self.combobox_Plate = MyComboBox()
         self.combobox_Plate.setFixedHeight(30)
         self.combobox_Plate.popupAboutToBeShown.connect(self.on_combobox_Plate_clicked)
+        self.combobox_Plate.currentIndexChanged.connect(self.on_combobox_Plate_clicked)
 
         self.btn_last_plate = QPushButton("<")
         self.btn_last_plate.setFixedSize(30, 30)
@@ -512,8 +513,10 @@ class ImgPRWidget(QWidget):
         if self.fileindex in self.checkedlist:
             if len(self.filelist)==0:
                 self.fileindex=-1
+                self.qimg=None
             else:
                 self.fileindex=0
+                self.showImageFile(self.filelist[0].file_path)
         else:
             for i in range(len(self.filelist)):
                 if self.filelist[i].file_path==currentImgPath:
@@ -532,7 +535,7 @@ class ImgPRWidget(QWidget):
 
     def on_btn_recognize_clicked(self):
 
-        if self.qimg != None:
+        if self.fileindex>=0 and self.qimg != None:
             self.plate = CPlate()
             self.label_RunningMSG.setText('图片识别中...')
 
@@ -553,7 +556,7 @@ class ImgPRWidget(QWidget):
                     plate_license, plate_x, plate_y, plate_w, plate_h = self.filelist[self.fileindex].plates[i]
                     self.combobox_Plate.insertItem(i, "{} {} {} {} {}".format(plate_license, plate_x, plate_y, plate_w,
                                                                               plate_h))
-
+                self.combobox_Plate.setCurrentIndex(0)
                 self.label_RunningMSG.setText(
                     '图片识别完成！     发现 {plates} 张车牌    运行时间:{runtime:.3f}s'.format(
                         plates=platenum, runtime=runtime))
@@ -642,9 +645,8 @@ class ImgPRWidget(QWidget):
             return
         self.label_RunningMSG.clear()
         self.openIMG(file_path)
-        self.setShowQIMG()
         self.currentFilePathLabel.setText(file_path)
-        self.upfateFileIndex()
+        self.updateFileIndex()
         self.combobox_DetectType.setCurrentIndex(self.filelist[self.fileindex].detecttype_value)
         self.spinbox_MaxPlates.setValue(self.filelist[self.fileindex].maxplates_value)
         if self.filelist[self.fileindex].debug_value:
@@ -657,9 +659,14 @@ class ImgPRWidget(QWidget):
             self.cb_label.setCheckState(Qt.Unchecked)
         self.combobox_Plate.clear()
         for i in range(len(self.filelist[self.fileindex].plates)):
+
             plate_license, plate_x, plate_y, plate_w, plate_h = self.filelist[self.fileindex].plates[i]
             self.combobox_Plate.insertItem(i, "{} {} {} {} {}".format(plate_license, plate_x, plate_y, plate_w,
                                                                       plate_h))
+        if len(self.filelist[self.fileindex].plates)>0:
+            self.plateindex = 0
+            self.combobox_Plate.setCurrentIndex(0)
+        self.setShowPlate()
         if len(self.filelist[self.fileindex].plates)>0:
             self.plateindex = 0
         else:
@@ -733,11 +740,11 @@ class ImgPRWidget(QWidget):
         else:
             self.selectAllImgCheckBox.setCheckState(Qt.Unchecked)
 
-        self.upfateFileIndex()
+        self.updateFileIndex()
 
         self.selectAllImgCheckBox.setText("全选 ({}/{})".format(len(self.checkedlist),len(self.filelist)))
 
-    def upfateFileIndex(self):
+    def updateFileIndex(self):
         if len(self.filelist)==0:
             self.initPRWidget()
             self.fileindex=-1

@@ -152,9 +152,9 @@ class MainWindow(QMainWindow):
         ImgRecognizeAct.setStatusTip('图片识别')
         ImgRecognizeAct.triggered.connect(self.on_ImgRecognizeAct_clicked)
 
-        ViseoRecognizeAct = QAction('&视频识别', self)
-        ViseoRecognizeAct.setStatusTip('视频识别')
-        ViseoRecognizeAct.triggered.connect(self.on_VideoRecognizeAct_clicked)
+        VideoRecognizeAct = QAction('&视频识别', self)
+        VideoRecognizeAct.setStatusTip('视频识别')
+        VideoRecognizeAct.triggered.connect(self.on_VideoRecognizeAct_clicked)
 
         settingAct = QAction('&系统设置', self)
         settingAct.setStatusTip('系统设置')
@@ -172,7 +172,7 @@ class MainWindow(QMainWindow):
         menubar = self.menuBar()
         fileMenu = menubar.addMenu('&主菜单')
         fileMenu.addAction(ImgRecognizeAct)
-        fileMenu.addAction(ViseoRecognizeAct)
+        fileMenu.addAction(VideoRecognizeAct)
         fileMenu.addSeparator()
         fileMenu.addAction(settingAct)
         fileMenu.addSeparator()

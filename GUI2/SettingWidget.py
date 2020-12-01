@@ -655,7 +655,7 @@ class SettingWidget(QWidget):
             self.lineedit_GrayChANN.setText(path)
 
     def on_btn_ChineseMapping_clicked(self):
-        path = QFileDialog.getOpenFileName(self, "设置ChineseMapping模型路径", "./resources/model",
+        path = QFileDialog.getOpenFileName(self, "设置ChineseMapping路径", "./resources/model",
                                            "File(*)")[0]
         if len(path) != 0:
             self.lineedit_ChineseMapping.setText(path)
@@ -668,7 +668,7 @@ class SettingWidget(QWidget):
     def on_btn_VideoPR_OutPutPath_clicked(self):
         path = QFileDialog.getExistingDirectory(self, "设置图片识别结果保存路径", "./resources/video/result")
         if len(path) != 0:
-            self.lineedit_VidoePR_OutPutPath.setText(path)
+            self.lineedit_VideoPR_OutPutPath.setText(path)
 
     def on_btn_defualt_clicked(self):
         self.defualtData()
