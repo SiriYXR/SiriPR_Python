@@ -104,10 +104,10 @@ venv.bak/
 .mypy_cache/
 
 #resources
-/resources/image
-/resources/video
-/resources/train
-/resources/model
+#/resources/image
+#/resources/video
+#/resources/train
+#/resources/model
 
 .idea/
 .idea/misc.xml
